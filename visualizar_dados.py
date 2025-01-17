@@ -1,56 +1,59 @@
 import streamlit as st
 import pandas as pd
 import json
-import os
+import requests
 
-# Função para carregar dados de um único estado/cidade
+# URL base do repositório GitHub contendo os arquivos JSON
+GITHUB_BASE_URL = "https://raw.githubusercontent.com/SEU_USUARIO/SEU_REPOSITORIO/main/todas_escolas"
+
+# Função para baixar e carregar os arquivos JSON
 @st.cache_data
-def load_state_data(state_name, folder_path="todas_escolas"):
-    file_path = os.path.join(folder_path, f"{state_name}.json")
-    if os.path.exists(file_path):
-        with open(file_path, "r", encoding="utf-8") as f:
-            data = json.load(f)
-        return pd.DataFrame([
-            {
-                "id": school.get("id"),
-                "name": school.get("name"),
-                "city": city,
-                "state": state_name,
-                "address": school.get("address", {}).get("street", ""),
-                "phone": school.get("contact", {}).get("full_phone", "")
-            }
-            for city, schools in data.items()
-            for school in schools
-        ])
-    else:
-        st.error(f"Arquivo para {state_name} não encontrado!")
-        return pd.DataFrame()
+def load_data_from_github():
+    estados = ["estado1.json", "estado2.json", "estado3.json"]  # Substitua pelos nomes reais dos arquivos JSON
+    all_schools = []
 
-# Interface do Streamlit
-st.title("Visualização de Dados Escolares por Estado")
+    for estado in estados:
+        url = f"{GITHUB_BASE_URL}/{estado}"
+        try:
+            response = requests.get(url)
+            response.raise_for_status()  # Verifica se a requisição foi bem-sucedida
+            data = json.loads(response.text)
 
-# Lista de estados disponíveis (baseada nos arquivos JSON disponíveis)
-states_available = [
-    file.replace(".json", "")
-    for file in os.listdir("todas_escolas")
-    if file.endswith(".json")
-]
+            # Processa os dados
+            for state, cities in data.items():
+                for city, schools in cities.items():
+                    for school in schools:
+                        all_schools.append({
+                            "id": school.get("id"),
+                            "name": school.get("name"),
+                            "city": city,
+                            "state": state,
+                            "address": school.get("address", {}).get("street", ""),
+                            "phone": school.get("contact", {}).get("full_phone", "")
+                        })
 
-# Seleção de estado
-selected_state = st.selectbox("Selecione o estado", states_available)
+        except requests.exceptions.RequestException as e:
+            st.error(f"Erro ao carregar dados do arquivo {estado}: {e}")
 
-# Carregar e exibir dados do estado selecionado
-if selected_state:
-    df = load_state_data(selected_state)
-    if not df.empty:
-        st.dataframe(df)
+    return pd.DataFrame(all_schools)
 
-        # Botão para baixar os dados filtrados
-        st.download_button(
-            label="Baixar CSV",
-            data=df.to_csv(index=False).encode("utf-8"),
-            file_name=f"escolas_{selected_state}.csv",
-            mime="text/csv",
-        )
-    else:
-        st.warning(f"Nenhum dado disponível para o estado: {selected_state}")
+# Visualizar os dados
+st.title("Visualização de Dados Escolares Consolidada")
+df = load_data_from_github()
+
+# Mostrar uma tabela completa ou filtrada
+if not df.empty:
+    state_filter = st.selectbox("Selecione o estado", ["Todos"] + df["state"].unique().tolist())
+    if state_filter != "Todos":
+        df = df[df["state"] == state_filter]
+
+    st.dataframe(df)
+
+    st.download_button(
+        label="Baixar CSV",
+        data=df.to_csv(index=False).encode("utf-8"),
+        file_name=f"escolas_{state_filter if state_filter != 'Todos' else 'todas'}.csv",
+        mime="text/csv"
+    )
+else:
+    st.warning("Nenhum dado encontrado.")
