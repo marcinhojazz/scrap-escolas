@@ -4,7 +4,7 @@ import json
 import requests
 
 # URL base do repositório GitHub contendo os arquivos JSON
-GITHUB_BASE_URL = "https://raw.githubusercontent.com/SEU_USUARIO/SEU_REPOSITORIO/main/todas_escolas"
+GITHUB_BASE_URL = "https://raw.githubusercontent.com/marcinhojazz/scrap-escolas/main/todas_escolas"
 
 # Função para baixar e carregar os arquivos JSON
 @st.cache_data
