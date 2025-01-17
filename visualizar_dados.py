@@ -1,47 +1,50 @@
 import streamlit as st
 import pandas as pd
-import json
 import requests
+import json
 
-# URL base do repositório GitHub contendo os arquivos JSON
-GITHUB_BASE_URL = "https://raw.githubusercontent.com/marcinhojazz/scrap-escolas/main/todas_escolas"
+# Lista de arquivos JSON no repositório
+json_files = [
+    "acre.json", "alagoas.json", "amapa.json", "amazonas.json", "bahia.json",
+    "ceara.json", "distrito-federal.json", "espirito-santo.json", "goias.json",
+    "maranhao.json", "mato-grosso-do-sul.json", "mato-grosso.json",
+    "minas-gerais.json", "para.json", "paraiba.json", "parana.json",
+    "pernambuco.json", "piaui.json", "rio-de-janeiro.json",
+    "rio-grande-do-norte.json", "rio-grande-do-sul.json", "rondonia.json",
+    "roraima.json", "santa-catarina.json", "sao-paulo.json", "sergipe.json",
+    "tocantins.json"
+]
 
-# Função para baixar e carregar os arquivos JSON
+# URL base do repositório GitHub
+base_url = "https://raw.githubusercontent.com/marcinhojazz/scrap-escolas/main/todas_escolas/"
+
 @st.cache_data
 def load_data_from_github():
-    estados = [
-    "rondonia.json", "alagoas.json", "acre.json", "espirito-santo.json", "amazonas.json", 
-    "goias.json", "mato-grosso-do-sul.json", "roraima.json", "bahia.json", "pernambuco.json", 
-    "tocantins.json", "minas-gerais.json", "rio-de-janeiro.json", "distrito-federal.json", 
-    "sao-paulo.json", "piaui.json", "mato-grosso.json", "para.json", "paraiba.json", 
-    "maranhao.json", "amapa.json", "santa-catarina.json", "ceara.json", "rio-grande-do-sul.json", 
-    "parana.json", "rio-grande-do-norte.json", "sergipe.json"
-    ]
-    
     all_schools = []
 
-    for estado in estados:
-        url = f"{GITHUB_BASE_URL}/{estado}"
+    for file_name in json_files:
+        url = f"{base_url}{file_name}"
         try:
             response = requests.get(url)
-            response.raise_for_status()  # Verifica se a requisição foi bem-sucedida
-            data = json.loads(response.text)
+            response.raise_for_status()
+            data = response.json()
 
-            # Processa os dados
+            # Processar os dados
             for state, cities in data.items():
-                for city, schools in cities.items():
-                    for school in schools:
-                        all_schools.append({
-                            "id": school.get("id"),
-                            "name": school.get("name"),
-                            "city": city,
-                            "state": state,
-                            "address": school.get("address", {}).get("street", ""),
-                            "phone": school.get("contact", {}).get("full_phone", "")
-                        })
-
-        except requests.exceptions.RequestException as e:
-            st.error(f"Erro ao carregar dados do arquivo {estado}: {e}")
+                if isinstance(cities, dict):  # Certificar-se de que cities é um dicionário
+                    for city, schools in cities.items():
+                        if isinstance(schools, list):  # Certificar-se de que schools é uma lista
+                            for school in schools:
+                                all_schools.append({
+                                    "id": school.get("id"),
+                                    "name": school.get("name"),
+                                    "city": city,
+                                    "state": state,
+                                    "address": school.get("address", {}).get("street", ""),
+                                    "phone": school.get("contact", {}).get("full_phone", "")
+                                })
+        except Exception as e:
+            st.error(f"Erro ao carregar {file_name}: {e}")
 
     return pd.DataFrame(all_schools)
 
@@ -49,14 +52,16 @@ def load_data_from_github():
 st.title("Visualização de Dados Escolares Consolidada")
 df = load_data_from_github()
 
-# Mostrar uma tabela completa ou filtrada
 if not df.empty:
+    # Filtro por estado
     state_filter = st.selectbox("Selecione o estado", ["Todos"] + df["state"].unique().tolist())
     if state_filter != "Todos":
         df = df[df["state"] == state_filter]
 
+    # Exibir dados
     st.dataframe(df)
 
+    # Opção de download
     st.download_button(
         label="Baixar CSV",
         data=df.to_csv(index=False).encode("utf-8"),
