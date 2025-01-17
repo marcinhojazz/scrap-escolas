@@ -9,7 +9,14 @@ GITHUB_BASE_URL = "https://raw.githubusercontent.com/marcinhojazz/scrap-escolas/
 # Função para baixar e carregar os arquivos JSON
 @st.cache_data
 def load_data_from_github():
-    estados = ["rondonia.json", "alagoas.json", "acre.json", "espirito-santo.json", "amazonas.json", "goias.json", "mato-grosso-do-sul.json", "roraima.json", "bahia.json", "pernambuco.json", "tocantins.json", "minas-gerais.json", "rio-de-janeiro.json", "distrito-federal.json", "sao-paulo.json", "piaui.json", "mato-grosso.json", "para.json", "paraiba.json", "maranhao.json", "amapa.json", "santa-catarina.json", "ceara.json", "rio-grande-do-sul.json", "parana.json", "rio-grande-do-norte.json", "sergipe.json"]
+    estados = [
+    "rondonia.json", "alagoas.json", "acre.json", "espirito-santo.json", "amazonas.json", 
+    "goias.json", "mato-grosso-do-sul.json", "roraima.json", "bahia.json", "pernambuco.json", 
+    "tocantins.json", "minas-gerais.json", "rio-de-janeiro.json", "distrito-federal.json", 
+    "sao-paulo.json", "piaui.json", "mato-grosso.json", "para.json", "paraiba.json", 
+    "maranhao.json", "amapa.json", "santa-catarina.json", "ceara.json", "rio-grande-do-sul.json", 
+    "parana.json", "rio-grande-do-norte.json", "sergipe.json"
+    ]
     
     all_schools = []
 
