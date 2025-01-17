@@ -30,19 +30,17 @@ def load_data_from_github():
             data = response.json()
 
             # Processar os dados
-            for state, cities in data.items():
-                if isinstance(cities, dict):  # Certificar-se de que cities é um dicionário
-                    for city, schools in cities.items():
-                        if isinstance(schools, list):  # Certificar-se de que schools é uma lista
-                            for school in schools:
-                                all_schools.append({
-                                    "id": school.get("id"),
-                                    "name": school.get("name"),
-                                    "city": city,
-                                    "state": state,
-                                    "address": school.get("address", {}).get("street", ""),
-                                    "phone": school.get("contact", {}).get("full_phone", "")
-                                })
+            for city, schools in data.items():
+                if isinstance(schools, list):  # Certificar-se de que o valor é uma lista
+                    for school in schools:
+                        all_schools.append({
+                            "id": school.get("id"),
+                            "name": school.get("name"),
+                            "city": city,
+                            "state": file_name.replace(".json", ""),
+                            "address": school.get("address", {}).get("street", ""),
+                            "phone": school.get("contact", {}).get("full_phone", "")
+                        })
         except Exception as e:
             st.error(f"Erro ao carregar {file_name}: {e}")
 
